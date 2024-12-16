@@ -16,26 +16,28 @@ serve(async (req) => {
   try {
     const { answers, isFirstTime } = await req.json();
     
-    // Calculate average temperature from filled answers
     const temperatures = Object.values(answers).map((data: any) => data.temperature);
     const avgTemperature = temperatures.reduce((a: number, b: number) => a + b, 0) / temperatures.length;
     
-    // Create context from filled answers and their prompts
     const context = Object.entries(answers)
       .map(([key, data]: [string, any]) => `${key}: ${data.value} (${data.prompt})`)
       .join('\n');
 
-    const prompt = `Generate 3 ${isFirstTime ? 'first-time conversation' : ''} ice breakers based on this context:
+    const prompt = `Generate 3 engaging ice breakers based on this context:
     ${context}
     
     Important guidelines:
+    - Mix between different formats:
+      * Casual questions
+      * Fun facts or observations
+      * Light-hearted statements
+      * Friendly banter (when appropriate)
     - Keep responses under 30 words each
-    - Be casual and natural, avoid being cheesy or overly familiar
+    - Be natural and conversational
     - Return exactly 3 ice breakers, numbered 1-3
     - No introductory text or explanations
-    - No exclamation marks or emojis
     - Consider both the speaker's traits and the target's characteristics
-    ${isFirstTime ? '- These should be suitable for a first-time conversation icebreakers so avoid acting so familiar' : ''}`;
+    ${isFirstTime ? '- These should be suitable for a first-time conversation, so keep it light and approachable' : ''}`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -44,15 +46,15 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a concise assistant that generates short, natural conversation starters. No fluff or explanations, just the ice breakers.'
+            content: 'You are a friendly conversation starter that mixes questions, statements, and fun facts to create engaging ice breakers.'
           },
           { role: 'user', content: prompt }
         ],
-        temperature: avgTemperature,
+        temperature: isFirstTime ? 0.8 : avgTemperature,
       }),
     });
 

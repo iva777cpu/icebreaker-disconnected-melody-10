@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Pen, Trash2 } from "lucide-react";
+import { RefreshCw, Save } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,6 +15,7 @@ export const QuestionForm = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [profileName, setProfileName] = useState("");
   const [isFirstTime, setIsFirstTime] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -22,10 +23,16 @@ export const QuestionForm = () => {
     answers,
     aiResponses,
     isLoading,
-    handleInputChange,
+    handleInputChange: baseHandleInputChange,
     generateResponses: baseGenerateResponses,
-    clearForm
+    clearForm,
+    setAnswers
   } = useQuestions();
+
+  const handleInputChange = (id: string, value: string) => {
+    baseHandleInputChange(id, value);
+    setHasUnsavedChanges(true);
+  };
 
   const generateResponses = () => {
     baseGenerateResponses(isFirstTime);
@@ -54,6 +61,29 @@ export const QuestionForm = () => {
       });
       setShowSaveDialog(false);
       setProfileName("");
+      setHasUnsavedChanges(false);
+    },
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (profileId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('saved_profiles')
+        .update({ answers })
+        .eq('id', profileId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
+      toast({
+        title: "Changes Saved!",
+        description: "Your profile changes have been saved successfully.",
+      });
+      setHasUnsavedChanges(false);
     },
   });
 
@@ -79,6 +109,11 @@ export const QuestionForm = () => {
       });
     },
   });
+
+  const handleNewProfile = () => {
+    clearForm();
+    setHasUnsavedChanges(false);
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 space-y-6">
@@ -129,7 +164,16 @@ export const QuestionForm = () => {
         </div>
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-4">
+        {hasUnsavedChanges && (
+          <Button
+            onClick={() => updateProfileMutation.mutate()}
+            className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            Save Changes
+          </Button>
+        )}
         <Button
           onClick={generateResponses}
           disabled={isLoading}
