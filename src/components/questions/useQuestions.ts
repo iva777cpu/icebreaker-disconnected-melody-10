@@ -29,28 +29,34 @@ export const questions = {
 };
 
 export const useQuestions = () => {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [aiResponses, setAiResponses] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentProfileName, setCurrentProfileName] = useState("");
-  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+  const [state, setState] = useState({
+    answers: {} as Record<string, string>,
+    aiResponses: [] as string[],
+    currentProfileName: "",
+    currentProfileId: null as string | null,
+    isLoading: false
+  });
 
   const handleInputChange = (id: string, value: string) => {
     console.log('Updating answer for:', id, 'with value:', value);
-    setAnswers(prev => ({
+    setState(prev => ({
       ...prev,
-      [id]: value
+      answers: {
+        ...prev.answers,
+        [id]: value
+      }
     }));
   };
 
   const clearForm = useCallback(() => {
     console.log('Clearing form state completely');
-    // Reset all state to initial values
-    setAnswers({});
-    setAiResponses([]);
-    setCurrentProfileId(null);
-    setCurrentProfileName("");
-    setIsLoading(false);
+    setState({
+      answers: {},
+      aiResponses: [],
+      currentProfileName: "",
+      currentProfileId: null,
+      isLoading: false
+    });
   }, []);
 
   const loadProfile = useCallback((profileData: any) => {
@@ -60,20 +66,20 @@ export const useQuestions = () => {
       return;
     }
     
-    // First clear existing data
-    clearForm();
-    
-    // Then set new profile data
-    setAnswers(profileData.answers || {});
-    setCurrentProfileName(profileData.name || '');
-    setCurrentProfileId(profileData.id || null);
-  }, [clearForm]);
+    setState({
+      answers: profileData.answers || {},
+      aiResponses: [],
+      currentProfileName: profileData.name || '',
+      currentProfileId: profileData.id || null,
+      isLoading: false
+    });
+  }, []);
 
   const generateResponses = async (isFirstTime: boolean = false) => {
-    setIsLoading(true);
+    setState(prev => ({ ...prev, isLoading: true }));
     try {
-      console.log('Generating responses with answers:', answers);
-      const filledAnswers = Object.entries(answers)
+      console.log('Generating responses with answers:', state.answers);
+      const filledAnswers = Object.entries(state.answers)
         .filter(([_, value]) => value && value.toString().trim() !== '')
         .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
 
@@ -93,14 +99,16 @@ export const useQuestions = () => {
       });
 
       if (error) throw error;
-      setAiResponses(data.iceBreakers);
+      setState(prev => ({ ...prev, aiResponses: data.iceBreakers, isLoading: false }));
     } catch (error) {
       console.error('Error generating responses:', error);
+      setState(prev => ({ ...prev, isLoading: false }));
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  // Destructure state for return values
+  const { answers, aiResponses, currentProfileName, currentProfileId, isLoading } = state;
 
   return {
     answers,
@@ -110,11 +118,16 @@ export const useQuestions = () => {
     generateResponses,
     clearForm,
     loadProfile,
-    setAnswers,
-    setAiResponses,
     currentProfileName,
-    setCurrentProfileName,
     currentProfileId,
-    setCurrentProfileId
+    // For compatibility with existing code
+    setAnswers: (newAnswers: Record<string, string>) => 
+      setState(prev => ({ ...prev, answers: newAnswers })),
+    setAiResponses: (newResponses: string[]) => 
+      setState(prev => ({ ...prev, aiResponses: newResponses })),
+    setCurrentProfileName: (name: string) => 
+      setState(prev => ({ ...prev, currentProfileName: name })),
+    setCurrentProfileId: (id: string | null) => 
+      setState(prev => ({ ...prev, currentProfileId: id }))
   };
 };
