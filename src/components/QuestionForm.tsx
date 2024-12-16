@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, Save, Edit2, Trash2 } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { RefreshCw, BookmarkPlus, Edit2, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { QuestionCard } from "./questions/QuestionCard";
 import { ResponseCard } from "./responses/ResponseCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +35,8 @@ export const QuestionForm = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [aiResponses, setAiResponses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [profileName, setProfileName] = useState("New Profile");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [profileName, setProfileName] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -82,6 +83,8 @@ export const QuestionForm = () => {
         title: "Profile Saved!",
         description: "Your profile has been saved successfully.",
       });
+      setShowSaveDialog(false);
+      setProfileName("");
     },
   });
 
@@ -104,42 +107,6 @@ export const QuestionForm = () => {
       toast({
         title: "Saved!",
         description: "Response has been saved to your collection.",
-      });
-    },
-  });
-
-  const deleteProfileMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('saved_profiles')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast({
-        title: "Profile Deleted",
-        description: "The profile has been removed.",
-      });
-    },
-  });
-
-  const deleteResponseMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('saved_responses')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-responses'] });
-      toast({
-        title: "Response Deleted",
-        description: "The saved response has been removed.",
       });
     },
   });
@@ -173,97 +140,16 @@ export const QuestionForm = () => {
     }
   };
 
-  const loadProfile = (profile: any) => {
-    setAnswers(profile.answers);
-    setProfileName(profile.name);
-    toast({
-      title: "Profile Loaded",
-      description: "Profile data has been loaded into the form.",
-    });
-  };
-
   return (
     <div className="max-w-5xl mx-auto px-4 space-y-6">
-      <div className="flex justify-between items-center">
-        <Input
-          value={profileName}
-          onChange={(e) => setProfileName(e.target.value)}
-          className="max-w-xs text-sm bg-[#2D4531]/5 border-[#2D4531]/20 text-[#EDEDDD]"
-          placeholder="Profile Name"
-        />
-        <div className="space-x-3">
-          <Button 
-            onClick={() => saveProfileMutation.mutate()}
-            className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Save Profile
-          </Button>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="border-[#2D4531]/20 text-[#EDEDDD]">
-                View Saved
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-[400px] sm:w-[540px] bg-[#1a2a1d] border-l-[#2D4531]/20">
-              <SheetHeader>
-                <SheetTitle className="text-[#EDEDDD]">Saved Profiles & Responses</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6 space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4 text-[#EDEDDD]">Saved Profiles</h3>
-                  <div className="space-y-3">
-                    {savedProfiles?.map((profile) => (
-                      <div key={profile.id} className="p-3 rounded-md bg-[#2D4531]/10 border border-[#2D4531]/20">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-[#EDEDDD]">{profile.name}</span>
-                          <div className="space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => loadProfile(profile)}
-                              className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteProfileMutation.mutate(profile.id)}
-                              className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium mb-4 text-[#EDEDDD]">Saved Responses</h3>
-                  <div className="space-y-3">
-                    {savedResponses?.map((response) => (
-                      <div key={response.id} className="p-3 rounded-md bg-[#2D4531]/10 border border-[#2D4531]/20">
-                        <div className="flex justify-between items-center gap-4">
-                          <p className="text-sm text-[#EDEDDD]">{response.text}</p>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteResponseMutation.mutate(response.id)}
-                            className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+      <div className="flex justify-end">
+        <Button 
+          onClick={() => setShowSaveDialog(true)}
+          className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
+        >
+          <BookmarkPlus className="mr-2 h-4 w-4" />
+          Save Profile
+        </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -307,6 +193,37 @@ export const QuestionForm = () => {
           </div>
         </div>
       )}
+
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="bg-[#1A2A1D] text-[#EDEDDD]">
+          <DialogHeader>
+            <DialogTitle>Save Profile</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={profileName}
+              onChange={(e) => setProfileName(e.target.value)}
+              placeholder="Enter profile name"
+              className="bg-[#2D4531]/10 border-[#2D4531]/20 text-[#EDEDDD]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setShowSaveDialog(false)}
+              className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => saveProfileMutation.mutate()}
+              className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
