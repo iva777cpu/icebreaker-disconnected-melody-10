@@ -44,16 +44,11 @@ export const Menu = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast("Profile Deleted", {
-        description: "The profile has been deleted successfully.",
-      });
+      toast.success("Profile deleted successfully");
     },
     onError: (error) => {
       console.error('Error deleting profile:', error);
-      toast("Error", {
-        description: "Failed to delete profile. Please try again.",
-        style: { background: 'red', color: 'white' }
-      });
+      toast.error("Failed to delete profile. Please try again.");
     },
   });
 
@@ -66,18 +61,14 @@ export const Menu = () => {
     console.log('Creating new profile - clearing all state');
     clearForm();
     setOpen(false);
-    toast("New Profile", {
-      description: "Started a new profile.",
-    });
+    toast.success("Started a new profile");
   };
 
   const handleLoadProfile = (profile: any) => {
     console.log('Loading profile:', profile);
     loadProfile(profile);
     setOpen(false);
-    toast("Profile Loaded", {
-      description: "The profile has been loaded successfully.",
-    });
+    toast.success("Profile loaded successfully");
   };
 
   const handleViewSavedResponses = () => {

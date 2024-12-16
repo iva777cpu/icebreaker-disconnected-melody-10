@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 import Index from "@/pages/Index";
 import SavedResponses from "@/pages/SavedResponses";
 import "./App.css";
 
-// Create a client
+// Create a client with proper error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -24,7 +24,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/saved-responses" element={<SavedResponses />} />
         </Routes>
-        <Toaster />
+        <Toaster richColors closeButton position="top-center" />
       </Router>
     </QueryClientProvider>
   );
