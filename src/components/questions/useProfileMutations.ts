@@ -23,12 +23,10 @@ export const useProfileMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast.success("Profile saved successfully");
+      toast("Profile Saved!", {
+        description: "Your profile has been saved successfully.",
+      });
     },
-    onError: (error) => {
-      console.error('Error saving profile:', error);
-      toast.error("Failed to save profile. Please try again.");
-    }
   });
 
   const updateProfileMutation = useMutation({
@@ -46,12 +44,10 @@ export const useProfileMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast.success("Profile updated successfully");
+      toast("Changes Saved!", {
+        description: "Your profile changes have been saved successfully.",
+      });
     },
-    onError: (error) => {
-      console.error('Error updating profile:', error);
-      toast.error("Failed to update profile. Please try again.");
-    }
   });
 
   const updateProfileNameMutation = useMutation({
@@ -66,12 +62,10 @@ export const useProfileMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast.success("Profile name updated successfully");
+      toast("Profile Updated", {
+        description: "Profile name has been updated successfully.",
+      });
     },
-    onError: (error) => {
-      console.error('Error updating profile name:', error);
-      toast.error("Failed to update profile name. Please try again.");
-    }
   });
 
   return {

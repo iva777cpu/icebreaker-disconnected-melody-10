@@ -22,7 +22,6 @@ export const QuestionForm = () => {
     handleInputChange: baseHandleInputChange,
     generateResponses: baseGenerateResponses,
     clearForm,
-    loadProfile,
     setAnswers,
     setAiResponses,
     currentProfileName,
@@ -45,7 +44,10 @@ export const QuestionForm = () => {
 
   const handleNewProfile = () => {
     clearForm();
+    setCurrentProfileId(null);
     setHasUnsavedChanges(false);
+    setAiResponses([]);
+    setCurrentProfileName("");
   };
 
   const handleSaveChanges = () => {

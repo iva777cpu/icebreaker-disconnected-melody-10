@@ -12,22 +12,16 @@ export const Menu = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { clearForm, loadProfile } = useQuestions();
+  const { clearForm, setAnswers, setCurrentProfileName, setCurrentProfileId } = useQuestions();
 
-  const { data: savedProfiles = [], isError } = useQuery({
+  const { data: savedProfiles } = useQuery({
     queryKey: ['saved-profiles'],
     queryFn: async () => {
       console.log('Fetching saved profiles');
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('saved_profiles')
         .select('*')
         .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching profiles:', error);
-        throw error;
-      }
-      
       console.log('Fetched profiles:', data);
       return data || [];
     },
@@ -44,11 +38,9 @@ export const Menu = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast.success("Profile deleted successfully");
-    },
-    onError: (error) => {
-      console.error('Error deleting profile:', error);
-      toast.error("Failed to delete profile. Please try again.");
+      toast("Profile Deleted", {
+        description: "The profile has been deleted successfully.",
+      });
     },
   });
 
@@ -61,25 +53,29 @@ export const Menu = () => {
     console.log('Creating new profile - clearing all state');
     clearForm();
     setOpen(false);
-    toast.success("Started a new profile");
+    toast("New Profile", {
+      description: "Started a new profile.",
+    });
   };
 
   const handleLoadProfile = (profile: any) => {
     console.log('Loading profile:', profile);
-    loadProfile(profile);
+    // First clear the form to remove any existing data
+    clearForm();
+    // Then set the new profile data
+    setAnswers(profile.answers || {});
+    setCurrentProfileName(profile.name);
+    setCurrentProfileId(profile.id);
     setOpen(false);
-    toast.success("Profile loaded successfully");
+    toast("Profile Loaded", {
+      description: "The profile has been loaded successfully.",
+    });
   };
 
   const handleViewSavedResponses = () => {
     navigate("/saved-responses");
     setOpen(false);
   };
-
-  if (isError) {
-    console.error('Error loading profiles');
-    return null;
-  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
