@@ -63,7 +63,7 @@ export const Menu = () => {
     // Wait for state to clear
     await new Promise(resolve => setTimeout(resolve, 0));
     
-    // Then set the new profile data
+    // Then set the new profile data in the correct order
     setCurrentProfileId(profile.id);
     setCurrentProfileName(profile.name);
     setAnswers(profile.answers || {});
