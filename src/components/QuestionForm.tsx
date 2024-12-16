@@ -10,39 +10,10 @@ import { FormControls } from "./questions/FormControls";
 import { SaveProfileDialog } from "./questions/SaveProfileDialog";
 import { ProfileHeader } from "./questions/ProfileHeader";
 
-export const QuestionForm = () => {
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [profileName, setProfileName] = useState("");
-  const [isFirstTime, setIsFirstTime] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const {
-    answers,
-    aiResponses,
-    isLoading,
-    handleInputChange: baseHandleInputChange,
-    generateResponses: baseGenerateResponses,
-    clearForm,
-    setAnswers,
-    setAiResponses,
-    setCurrentProfileName,
-    currentProfileName
-  } = useQuestions();
-
-  const handleInputChange = (id: string, value: string) => {
-    baseHandleInputChange(id, value);
-    setHasUnsavedChanges(true);
-  };
-
-  const generateResponses = () => {
-    baseGenerateResponses(isFirstTime);
-  };
-
-  const saveProfileMutation = useMutation({
-    mutationFn: async () => {
+// Define mutations outside the component
+const createSaveProfileMutation = (queryClient: any, toast: any) => 
+  useMutation({
+    mutationFn: async ({ profileName, answers }: { profileName: string; answers: any }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -62,14 +33,12 @@ export const QuestionForm = () => {
         title: "Profile Saved!",
         description: "Your profile has been saved successfully.",
       });
-      setShowSaveDialog(false);
-      setProfileName("");
-      setHasUnsavedChanges(false);
     },
   });
 
-  const updateProfileMutation = useMutation({
-    mutationFn: async (profileId: string) => {
+const createUpdateProfileMutation = (queryClient: any, toast: any) =>
+  useMutation({
+    mutationFn: async ({ profileId, answers }: { profileId: string; answers: any }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -86,17 +55,16 @@ export const QuestionForm = () => {
         title: "Changes Saved!",
         description: "Your profile changes have been saved successfully.",
       });
-      setHasUnsavedChanges(false);
     },
   });
 
-  const updateProfileNameMutation = useMutation({
-    mutationFn: async (newName: string) => {
-      if (!currentProfileId) return;
+const createUpdateProfileNameMutation = (queryClient: any, toast: any) =>
+  useMutation({
+    mutationFn: async ({ profileId, newName }: { profileId: string; newName: string }) => {
       const { error } = await supabase
         .from('saved_profiles')
         .update({ name: newName })
-        .eq('id', currentProfileId);
+        .eq('id', profileId);
 
       if (error) throw error;
     },
@@ -109,7 +77,8 @@ export const QuestionForm = () => {
     },
   });
 
-  const saveResponseMutation = useMutation({
+const createSaveResponseMutation = (queryClient: any, toast: any) =>
+  useMutation({
     mutationFn: async (text: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -132,6 +101,43 @@ export const QuestionForm = () => {
     },
   });
 
+export const QuestionForm = () => {
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [isFirstTime, setIsFirstTime] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const {
+    answers,
+    aiResponses,
+    isLoading,
+    handleInputChange: baseHandleInputChange,
+    generateResponses: baseGenerateResponses,
+    clearForm,
+    setAnswers,
+    setAiResponses,
+    currentProfileName,
+    setCurrentProfileName,
+    currentProfileId,
+    setCurrentProfileId
+  } = useQuestions();
+
+  const saveProfileMutation = createSaveProfileMutation(queryClient, toast);
+  const updateProfileMutation = createUpdateProfileMutation(queryClient, toast);
+  const updateProfileNameMutation = createUpdateProfileNameMutation(queryClient, toast);
+  const saveResponseMutation = createSaveResponseMutation(queryClient, toast);
+
+  const handleInputChange = (id: string, value: string) => {
+    baseHandleInputChange(id, value);
+    setHasUnsavedChanges(true);
+  };
+
+  const generateResponses = () => {
+    baseGenerateResponses(isFirstTime);
+  };
+
   const handleNewProfile = () => {
     clearForm();
     setCurrentProfileId(null);
@@ -142,12 +148,26 @@ export const QuestionForm = () => {
 
   const handleSaveChanges = () => {
     if (currentProfileId) {
-      updateProfileMutation.mutate(currentProfileId);
+      updateProfileMutation.mutate({ profileId: currentProfileId, answers });
+      setHasUnsavedChanges(false);
     }
   };
 
   const handleSaveNewProfile = () => {
     setShowSaveDialog(true);
+  };
+
+  const handleSaveProfile = () => {
+    saveProfileMutation.mutate(
+      { profileName, answers },
+      {
+        onSuccess: () => {
+          setShowSaveDialog(false);
+          setProfileName("");
+          setHasUnsavedChanges(false);
+        },
+      }
+    );
   };
 
   return (
@@ -157,7 +177,9 @@ export const QuestionForm = () => {
         currentProfileId={currentProfileId}
         onNameChange={(newName) => {
           setCurrentProfileName(newName);
-          updateProfileNameMutation.mutate(newName);
+          if (currentProfileId) {
+            updateProfileNameMutation.mutate({ profileId: currentProfileId, newName });
+          }
         }}
       />
 
@@ -240,7 +262,7 @@ export const QuestionForm = () => {
         onOpenChange={setShowSaveDialog}
         profileName={profileName}
         onProfileNameChange={setProfileName}
-        onSave={() => saveProfileMutation.mutate()}
+        onSave={handleSaveProfile}
       />
     </div>
   );
