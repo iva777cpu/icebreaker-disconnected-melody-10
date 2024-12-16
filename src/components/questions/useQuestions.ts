@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
 export const questions = {
@@ -36,22 +36,25 @@ export const useQuestions = () => {
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
   const handleInputChange = (id: string, value: string) => {
+    console.log('Updating answer for:', id, 'with value:', value);
     setAnswers(prev => ({
       ...prev,
       [id]: value
     }));
   };
 
-  const clearForm = () => {
+  const clearForm = useCallback(() => {
+    console.log('Clearing form state');
     setAnswers({});
     setAiResponses([]);
     setCurrentProfileId(null);
     setCurrentProfileName("");
-  };
+  }, []);
 
   const generateResponses = async (isFirstTime: boolean = false) => {
     setIsLoading(true);
     try {
+      console.log('Generating responses with answers:', answers);
       const filledAnswers = Object.entries(answers)
         .filter(([_, value]) => value && value.toString().trim() !== '')
         .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});

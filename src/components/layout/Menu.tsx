@@ -18,16 +18,19 @@ export const Menu = () => {
   const { data: savedProfiles } = useQuery({
     queryKey: ['saved-profiles'],
     queryFn: async () => {
+      console.log('Fetching saved profiles');
       const { data } = await supabase
         .from('saved_profiles')
         .select('*')
         .order('created_at', { ascending: false });
+      console.log('Fetched profiles:', data);
       return data || [];
     },
   });
 
   const deleteProfileMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting profile:', id);
       const { error } = await supabase
         .from('saved_profiles')
         .delete()
@@ -49,9 +52,8 @@ export const Menu = () => {
   };
 
   const handleNewProfile = () => {
+    console.log('Creating new profile');
     clearForm();
-    setCurrentProfileName("");
-    setCurrentProfileId(null);
     setOpen(false);
     toast({
       title: "New Profile",
@@ -60,7 +62,8 @@ export const Menu = () => {
   };
 
   const handleLoadProfile = (profile: any) => {
-    setAnswers(profile.answers);
+    console.log('Loading profile:', profile);
+    setAnswers(profile.answers || {});
     setCurrentProfileName(profile.name);
     setCurrentProfileId(profile.id);
     setOpen(false);
