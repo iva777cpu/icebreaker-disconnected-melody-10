@@ -39,13 +39,13 @@ export const useQuestions = () => {
   const [currentProfileName, setCurrentProfileName] = useState("");
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
-  // Synchronize state when profile ID changes
+  // Reset state when currentProfileId changes
   useEffect(() => {
-    const syncState = async () => {
-      console.log('Profile ID changed - syncing state:', currentProfileId);
+    const loadProfile = async () => {
+      console.log('Profile ID changed:', currentProfileId);
       
-      if (currentProfileId === null) {
-        console.log('Clearing all state for new/null profile');
+      if (!currentProfileId) {
+        console.log('No profile ID - clearing state');
         setAnswers({});
         setAiResponses([]);
         setCurrentProfileName("");
@@ -53,47 +53,41 @@ export const useQuestions = () => {
       }
 
       try {
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('saved_profiles')
           .select('*')
           .eq('id', currentProfileId)
           .single();
 
+        if (error) {
+          console.error('Error loading profile:', error);
+          throw error;
+        }
+
         if (profile) {
           console.log('Loading profile data:', profile);
-          // Ensure the answers object from the database is properly typed
           const typedAnswers: ProfileAnswers = profile.answers as ProfileAnswers || {};
           setAnswers(typedAnswers);
           setCurrentProfileName(profile.name);
         }
       } catch (error) {
-        console.error('Error syncing profile state:', error);
+        console.error('Error in loadProfile:', error);
       }
     };
 
-    syncState();
+    loadProfile();
   }, [currentProfileId]);
 
   const handleInputChange = (id: string, value: string) => {
-    console.log('Input change triggered for:', id);
-    setAnswers(prev => {
-      const newAnswers = { ...prev, [id]: value };
-      console.log('Updated answers state:', newAnswers);
-      return newAnswers;
-    });
+    console.log('Input change:', { id, value });
+    setAnswers(prev => ({
+      ...prev,
+      [id]: value
+    }));
   };
 
-  const clearForm = useCallback(() => {
-    console.log('Clearing form state');
-    setAnswers({});
-    setAiResponses([]);
-    setCurrentProfileId(null);
-    setCurrentProfileName("");
-    setIsLoading(false);
-  }, []);
-
   const generateResponses = async (isFirstTime: boolean = false) => {
-    console.log('Generating responses with state:', { answers, isFirstTime });
+    console.log('Generating responses:', { answers, isFirstTime });
     setIsLoading(true);
 
     try {
@@ -127,6 +121,14 @@ export const useQuestions = () => {
       setIsLoading(false);
     }
   };
+
+  const clearForm = useCallback(() => {
+    console.log('Clearing form state');
+    setAnswers({});
+    setAiResponses([]);
+    setCurrentProfileId(null);
+    setCurrentProfileName("");
+  }, []);
 
   return {
     answers,

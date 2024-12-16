@@ -51,7 +51,7 @@ export const Menu = () => {
 
   const handleNewProfile = () => {
     console.log('Creating new profile');
-    clearForm();
+    clearForm(); // This will reset all state including currentProfileId
     setOpen(false);
     toast.success("Started a new profile");
   };
@@ -62,7 +62,7 @@ export const Menu = () => {
     // First clear everything
     clearForm();
     
-    // Set the new profile data
+    // Then set the new profile data
     setCurrentProfileId(profile.id);
     setCurrentProfileName(profile.name);
     setAnswers(profile.answers || {});
