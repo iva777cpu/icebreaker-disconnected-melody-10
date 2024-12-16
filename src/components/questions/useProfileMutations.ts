@@ -27,6 +27,13 @@ export const useProfileMutations = () => {
         description: "Your profile has been saved successfully.",
       });
     },
+    onError: (error) => {
+      console.error('Error saving profile:', error);
+      toast("Error", {
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   const updateProfileMutation = useMutation({
@@ -48,6 +55,13 @@ export const useProfileMutations = () => {
         description: "Your profile changes have been saved successfully.",
       });
     },
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+      toast("Error", {
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   const updateProfileNameMutation = useMutation({
@@ -66,6 +80,13 @@ export const useProfileMutations = () => {
         description: "Profile name has been updated successfully.",
       });
     },
+    onError: (error) => {
+      console.error('Error updating profile name:', error);
+      toast("Error", {
+        description: "Failed to update profile name. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   return {

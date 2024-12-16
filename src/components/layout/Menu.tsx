@@ -14,14 +14,20 @@ export const Menu = () => {
   const queryClient = useQueryClient();
   const { clearForm, loadProfile } = useQuestions();
 
-  const { data: savedProfiles } = useQuery({
+  const { data: savedProfiles = [], isError } = useQuery({
     queryKey: ['saved-profiles'],
     queryFn: async () => {
       console.log('Fetching saved profiles');
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('saved_profiles')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
+      }
+      
       console.log('Fetched profiles:', data);
       return data || [];
     },
@@ -40,6 +46,13 @@ export const Menu = () => {
       queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
       toast("Profile Deleted", {
         description: "The profile has been deleted successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting profile:', error);
+      toast("Error", {
+        description: "Failed to delete profile. Please try again.",
+        variant: "destructive",
       });
     },
   });
@@ -71,6 +84,11 @@ export const Menu = () => {
     navigate("/saved-responses");
     setOpen(false);
   };
+
+  if (isError) {
+    console.error('Error loading profiles');
+    return null;
+  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
