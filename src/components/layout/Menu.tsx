@@ -13,7 +13,7 @@ export const Menu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { clearForm, setAnswers, setCurrentProfileName } = useQuestions();
+  const { clearForm, setAnswers, setCurrentProfileName, setCurrentProfileId } = useQuestions();
 
   const { data: savedProfiles } = useQuery({
     queryKey: ['saved-profiles'],
@@ -51,6 +51,7 @@ export const Menu = () => {
   const handleNewProfile = () => {
     clearForm();
     setCurrentProfileName("");
+    setCurrentProfileId(null);
     setOpen(false);
     toast({
       title: "New Profile",
@@ -61,6 +62,7 @@ export const Menu = () => {
   const handleLoadProfile = (profile: any) => {
     setAnswers(profile.answers);
     setCurrentProfileName(profile.name);
+    setCurrentProfileId(profile.id);
     setOpen(false);
     toast({
       title: "Profile Loaded",

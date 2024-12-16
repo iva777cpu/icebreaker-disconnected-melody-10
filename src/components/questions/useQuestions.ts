@@ -33,6 +33,7 @@ export const useQuestions = () => {
   const [aiResponses, setAiResponses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentProfileName, setCurrentProfileName] = useState("");
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
   const handleInputChange = (id: string, value: string) => {
     setAnswers(prev => ({
@@ -44,6 +45,8 @@ export const useQuestions = () => {
   const clearForm = () => {
     setAnswers({});
     setAiResponses([]);
+    setCurrentProfileId(null);
+    setCurrentProfileName("");
   };
 
   const generateResponses = async (isFirstTime: boolean = false) => {
@@ -88,6 +91,8 @@ export const useQuestions = () => {
     setAnswers,
     setAiResponses,
     currentProfileName,
-    setCurrentProfileName
+    setCurrentProfileName,
+    currentProfileId,
+    setCurrentProfileId
   };
 };
