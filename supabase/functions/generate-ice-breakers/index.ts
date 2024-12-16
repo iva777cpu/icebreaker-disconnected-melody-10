@@ -16,6 +16,10 @@ serve(async (req) => {
   try {
     const { answers, isFirstTime } = await req.json();
     
+    // Calculate average temperature from filled answers
+    const temperatures = Object.values(answers).map((data: any) => data.temperature);
+    const avgTemperature = temperatures.reduce((a: number, b: number) => a + b, 0) / temperatures.length;
+    
     // Create context from filled answers and their prompts
     const context = Object.entries(answers)
       .map(([key, data]: [string, any]) => `${key}: ${data.value} (${data.prompt})`)
@@ -40,7 +44,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           { 
             role: 'system', 
@@ -48,6 +52,7 @@ serve(async (req) => {
           },
           { role: 'user', content: prompt }
         ],
+        temperature: avgTemperature,
       }),
     });
 
