@@ -35,7 +35,7 @@ export const useQuestions = () => {
   const [currentProfileName, setCurrentProfileName] = useState("");
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
-  // Clear everything when currentProfileId changes
+  // Reset state when profile ID changes
   useEffect(() => {
     console.log('Profile ID changed:', currentProfileId);
     if (currentProfileId === null) {
@@ -47,11 +47,15 @@ export const useQuestions = () => {
   }, [currentProfileId]);
 
   const handleInputChange = (id: string, value: string) => {
-    console.log('Updating answer for:', id, 'with value:', value);
-    setAnswers(prev => ({
-      ...prev,
-      [id]: value
-    }));
+    console.log('Input changed for field:', id, 'with value:', value);
+    setAnswers(prev => {
+      const newAnswers = {
+        ...prev,
+        [id]: value
+      };
+      console.log('New answers state:', newAnswers);
+      return newAnswers;
+    });
   };
 
   const clearForm = useCallback(() => {
@@ -87,6 +91,7 @@ export const useQuestions = () => {
       });
 
       if (error) throw error;
+      console.log('Generated responses:', data.iceBreakers);
       setAiResponses(data.iceBreakers);
     } catch (error) {
       console.error('Error generating responses:', error);

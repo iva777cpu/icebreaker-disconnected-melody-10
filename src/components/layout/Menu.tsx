@@ -61,7 +61,7 @@ export const Menu = () => {
     clearForm();
     
     // Wait for state to clear
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Then set the new profile data in the correct order
     setCurrentProfileId(profile.id);
