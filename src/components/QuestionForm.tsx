@@ -105,7 +105,18 @@ export const QuestionForm = () => {
 
       {aiResponses.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-medium text-center text-[#EDEDDD]">Generated Ice Breakers</h2>
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-xl font-medium text-center text-[#EDEDDD]">Generated Ice Breakers</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={generateResponses}
+              disabled={isLoading}
+              className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
           <div className="grid gap-3">
             {aiResponses.map((response, index) => (
               <ResponseCard

@@ -16,14 +16,35 @@ serve(async (req) => {
   try {
     const { answers } = await req.json();
     
-    const prompt = `Given the following information about a person, generate 3 natural, engaging ice breakers that feel personal and appropriate:
-    
-    ${Object.entries(answers)
-      .filter(([_, value]) => value) // Only include answered questions
+    // Filter out empty answers
+    const filledAnswers = Object.entries(answers)
+      .filter(([_, value]) => value && value.toString().trim() !== '')
+      .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
+    // Separate user traits from target person traits
+    const userTraits = {
+      comeAcross: filledAnswers.comeAcross,
+      yourAge: filledAnswers.yourAge,
+      preferredTopics: filledAnswers.preferredTopics
+    };
+
+    const targetTraits = { ...filledAnswers };
+    delete targetTraits.comeAcross;
+    delete targetTraits.yourAge;
+    delete targetTraits.preferredTopics;
+
+    const prompt = `Generate 3 short, natural ice breakers based on these traits of the person I want to talk to:
+    ${Object.entries(targetTraits)
       .map(([key, value]) => `${key}: ${value}`)
       .join('\n')}
     
-    Generate 3 different ice breakers that are casual, natural, and specific to the information provided. Focus on their interests, hobbies, and what they're passionate about.`;
+    Important guidelines:
+    - Keep responses under 15 words
+    - Be casual and natural, avoid being cheesy or overly familiar
+    - Focus only on their interests and traits
+    - Return exactly 3 ice breakers, numbered 1-3
+    - No introductory text or explanations
+    - No exclamation marks or emojis`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -36,7 +57,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'You are a friendly assistant that helps generate natural, engaging ice breakers based on information about a person. Your responses should be conversational and show genuine interest.'
+            content: 'You are a concise assistant that generates short, natural conversation starters. No fluff or explanations, just the ice breakers.'
           },
           { role: 'user', content: prompt }
         ],
@@ -46,8 +67,8 @@ serve(async (req) => {
     const data = await response.json();
     const iceBreakers = data.choices[0].message.content
       .split('\n')
-      .filter(line => line.trim())
-      .slice(0, 3);
+      .filter(line => line.trim() && line.match(/^\d\./))
+      .map(line => line.replace(/^\d\.\s*/, '').trim());
 
     return new Response(JSON.stringify({ iceBreakers }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
