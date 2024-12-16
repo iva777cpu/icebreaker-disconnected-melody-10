@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Save, Plus } from "lucide-react";
+import { RefreshCw, Save, Plus, FilePlus } from "lucide-react";
 
 interface FormControlsProps {
   hasUnsavedChanges: boolean;
@@ -8,6 +8,7 @@ interface FormControlsProps {
   onSaveChanges: () => void;
   onSaveNewProfile: () => void;
   onGenerateResponses: () => void;
+  onNewProfile: () => void;
 }
 
 export const FormControls = ({
@@ -16,10 +17,19 @@ export const FormControls = ({
   isLoading,
   onSaveChanges,
   onSaveNewProfile,
-  onGenerateResponses
+  onGenerateResponses,
+  onNewProfile
 }: FormControlsProps) => {
   return (
     <div className="flex justify-center gap-4">
+      <Button
+        onClick={onNewProfile}
+        className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
+      >
+        <FilePlus className="mr-2 h-4 w-4" />
+        New Profile
+      </Button>
+      
       {hasUnsavedChanges && currentProfileId && (
         <Button
           onClick={onSaveChanges}

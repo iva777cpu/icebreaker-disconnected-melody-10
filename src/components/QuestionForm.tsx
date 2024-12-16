@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FormControls } from "./questions/FormControls";
 import { SaveProfileDialog } from "./questions/SaveProfileDialog";
+import { ProfileHeader } from "./questions/ProfileHeader";
 
 export const QuestionForm = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -26,7 +27,9 @@ export const QuestionForm = () => {
     generateResponses: baseGenerateResponses,
     clearForm,
     setAnswers,
-    setAiResponses
+    setAiResponses,
+    setCurrentProfileName,
+    currentProfileName
   } = useQuestions();
 
   const handleInputChange = (id: string, value: string) => {
@@ -87,6 +90,25 @@ export const QuestionForm = () => {
     },
   });
 
+  const updateProfileNameMutation = useMutation({
+    mutationFn: async (newName: string) => {
+      if (!currentProfileId) return;
+      const { error } = await supabase
+        .from('saved_profiles')
+        .update({ name: newName })
+        .eq('id', currentProfileId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
+      toast({
+        title: "Profile Updated",
+        description: "Profile name has been updated successfully.",
+      });
+    },
+  });
+
   const saveResponseMutation = useMutation({
     mutationFn: async (text: string) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -115,6 +137,7 @@ export const QuestionForm = () => {
     setCurrentProfileId(null);
     setHasUnsavedChanges(false);
     setAiResponses([]);
+    setCurrentProfileName("");
   };
 
   const handleSaveChanges = () => {
@@ -129,6 +152,15 @@ export const QuestionForm = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 space-y-6">
+      <ProfileHeader
+        profileName={currentProfileName}
+        currentProfileId={currentProfileId}
+        onNameChange={(newName) => {
+          setCurrentProfileName(newName);
+          updateProfileNameMutation.mutate(newName);
+        }}
+      />
+
       <div className="flex items-center gap-2 mb-4">
         <Checkbox
           id="firstTime"
@@ -183,6 +215,7 @@ export const QuestionForm = () => {
         onSaveChanges={handleSaveChanges}
         onSaveNewProfile={handleSaveNewProfile}
         onGenerateResponses={generateResponses}
+        onNewProfile={handleNewProfile}
       />
 
       {aiResponses.length > 0 && (

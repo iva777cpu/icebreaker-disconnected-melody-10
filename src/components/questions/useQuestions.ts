@@ -32,6 +32,7 @@ export const useQuestions = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [aiResponses, setAiResponses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentProfileName, setCurrentProfileName] = useState("");
 
   const handleInputChange = (id: string, value: string) => {
     setAnswers(prev => ({
@@ -85,6 +86,8 @@ export const useQuestions = () => {
     generateResponses,
     clearForm,
     setAnswers,
-    setAiResponses
+    setAiResponses,
+    currentProfileName,
+    setCurrentProfileName
   };
 };
