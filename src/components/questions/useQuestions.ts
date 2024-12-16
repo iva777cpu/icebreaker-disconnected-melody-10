@@ -45,12 +45,29 @@ export const useQuestions = () => {
 
   const clearForm = useCallback(() => {
     console.log('Clearing form state completely');
+    // Reset all state to initial values
     setAnswers({});
     setAiResponses([]);
     setCurrentProfileId(null);
     setCurrentProfileName("");
     setIsLoading(false);
   }, []);
+
+  const loadProfile = useCallback((profileData: any) => {
+    console.log('Loading profile data:', profileData);
+    if (!profileData) {
+      console.warn('Attempted to load undefined profile data');
+      return;
+    }
+    
+    // First clear existing data
+    clearForm();
+    
+    // Then set new profile data
+    setAnswers(profileData.answers || {});
+    setCurrentProfileName(profileData.name || '');
+    setCurrentProfileId(profileData.id || null);
+  }, [clearForm]);
 
   const generateResponses = async (isFirstTime: boolean = false) => {
     setIsLoading(true);
@@ -92,6 +109,7 @@ export const useQuestions = () => {
     handleInputChange,
     generateResponses,
     clearForm,
+    loadProfile,
     setAnswers,
     setAiResponses,
     currentProfileName,

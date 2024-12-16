@@ -12,7 +12,7 @@ export const Menu = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { clearForm, setAnswers, setCurrentProfileName, setCurrentProfileId } = useQuestions();
+  const { clearForm, loadProfile } = useQuestions();
 
   const { data: savedProfiles } = useQuery({
     queryKey: ['saved-profiles'],
@@ -60,12 +60,7 @@ export const Menu = () => {
 
   const handleLoadProfile = (profile: any) => {
     console.log('Loading profile:', profile);
-    // First clear the form to remove any existing data
-    clearForm();
-    // Then set the new profile data
-    setAnswers(profile.answers || {});
-    setCurrentProfileName(profile.name);
-    setCurrentProfileId(profile.id);
+    loadProfile(profile);
     setOpen(false);
     toast("Profile Loaded", {
       description: "The profile has been loaded successfully.",
