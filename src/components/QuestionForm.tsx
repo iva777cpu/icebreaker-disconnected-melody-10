@@ -16,6 +16,7 @@ export const QuestionForm = () => {
   const [profileName, setProfileName] = useState("");
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -112,7 +113,14 @@ export const QuestionForm = () => {
 
   const handleNewProfile = () => {
     clearForm();
+    setCurrentProfileId(null);
     setHasUnsavedChanges(false);
+  };
+
+  const handleSaveChanges = () => {
+    if (currentProfileId) {
+      updateProfileMutation.mutate(currentProfileId);
+    }
   };
 
   return (
@@ -165,9 +173,9 @@ export const QuestionForm = () => {
       </div>
 
       <div className="flex justify-center gap-4">
-        {hasUnsavedChanges && (
+        {hasUnsavedChanges && currentProfileId && (
           <Button
-            onClick={() => updateProfileMutation.mutate()}
+            onClick={handleSaveChanges}
             className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
           >
             <Save className="mr-2 h-4 w-4" />
