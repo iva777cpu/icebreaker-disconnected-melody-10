@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, Save, Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { QuestionCard } from "./questions/QuestionCard";
 import { ResponseCard } from "./responses/ResponseCard";
 import { questions, useQuestions } from "./questions/useQuestions";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FormControls } from "./questions/FormControls";
+import { SaveProfileDialog } from "./questions/SaveProfileDialog";
 
 export const QuestionForm = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -27,7 +25,8 @@ export const QuestionForm = () => {
     handleInputChange: baseHandleInputChange,
     generateResponses: baseGenerateResponses,
     clearForm,
-    setAnswers
+    setAnswers,
+    setAiResponses
   } = useQuestions();
 
   const handleInputChange = (id: string, value: string) => {
@@ -177,52 +176,19 @@ export const QuestionForm = () => {
         </div>
       </div>
 
-      <div className="flex justify-center gap-4">
-        {hasUnsavedChanges && currentProfileId && (
-          <Button
-            onClick={handleSaveChanges}
-            className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Save Changes
-          </Button>
-        )}
-        {!currentProfileId && Object.keys(answers).some(key => answers[key]) && (
-          <Button
-            onClick={handleSaveNewProfile}
-            className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Save Profile
-          </Button>
-        )}
-        <Button
-          onClick={generateResponses}
-          disabled={isLoading}
-          className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
-        >
-          {isLoading ? (
-            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 h-4 w-4" />
-          )}
-          Generate Ice Breakers
-        </Button>
-      </div>
+      <FormControls
+        hasUnsavedChanges={hasUnsavedChanges}
+        currentProfileId={currentProfileId}
+        isLoading={isLoading}
+        onSaveChanges={handleSaveChanges}
+        onSaveNewProfile={handleSaveNewProfile}
+        onGenerateResponses={generateResponses}
+      />
 
       {aiResponses.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-2">
             <h2 className="text-xl font-medium text-center text-[#EDEDDD]">Generated Ice Breakers</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={generateResponses}
-              disabled={isLoading}
-              className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
           </div>
           <div className="grid gap-3">
             {aiResponses.map((response, index) => (
@@ -236,36 +202,13 @@ export const QuestionForm = () => {
         </div>
       )}
 
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent className="bg-[#1A2A1D] text-[#EDEDDD]">
-          <DialogHeader>
-            <DialogTitle>Save Profile</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={profileName}
-              onChange={(e) => setProfileName(e.target.value)}
-              placeholder="Enter profile name"
-              className="bg-[#2D4531]/10 border-[#2D4531]/20 text-[#EDEDDD]"
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setShowSaveDialog(false)}
-              className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => saveProfileMutation.mutate()}
-              className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
-            >
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SaveProfileDialog
+        open={showSaveDialog}
+        onOpenChange={setShowSaveDialog}
+        profileName={profileName}
+        onProfileNameChange={setProfileName}
+        onSave={() => saveProfileMutation.mutate()}
+      />
     </div>
   );
 };
