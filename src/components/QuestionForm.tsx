@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Pen, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { QuestionCard } from "./questions/QuestionCard";
 import { ResponseCard } from "./responses/ResponseCard";
 import { questions, useQuestions } from "./questions/useQuestions";
@@ -13,6 +14,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 export const QuestionForm = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [profileName, setProfileName] = useState("");
+  const [isFirstTime, setIsFirstTime] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -21,9 +23,13 @@ export const QuestionForm = () => {
     aiResponses,
     isLoading,
     handleInputChange,
-    generateResponses,
+    generateResponses: baseGenerateResponses,
     clearForm
   } = useQuestions();
+
+  const generateResponses = () => {
+    baseGenerateResponses(isFirstTime);
+  };
 
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
@@ -76,6 +82,21 @@ export const QuestionForm = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 space-y-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Checkbox
+          id="firstTime"
+          checked={isFirstTime}
+          onCheckedChange={(checked) => setIsFirstTime(checked as boolean)}
+          className="border-[#EDEDDD]"
+        />
+        <label
+          htmlFor="firstTime"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[#EDEDDD]"
+        >
+          First time approaching this person?
+        </label>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {questions.map((question) => (
           <QuestionCard

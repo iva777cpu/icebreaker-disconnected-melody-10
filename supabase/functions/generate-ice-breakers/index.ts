@@ -14,14 +14,12 @@ serve(async (req) => {
   }
 
   try {
-    const { answers } = await req.json();
+    const { answers, isFirstTime } = await req.json();
     
-    // Filter out empty answers
     const filledAnswers = Object.entries(answers)
       .filter(([_, value]) => value && value.toString().trim() !== '')
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
 
-    // Separate user traits from target person traits
     const userTraits = {
       comeAcross: filledAnswers.comeAcross,
       yourAge: filledAnswers.yourAge,
@@ -33,18 +31,19 @@ serve(async (req) => {
     delete targetTraits.yourAge;
     delete targetTraits.preferredTopics;
 
-    const prompt = `Generate 3 short, natural ice breakers based on these traits of the person I want to talk to:
+    const prompt = `Generate 3 ${isFirstTime ? 'first-time conversation' : ''} ice breakers based on these traits of the person I want to talk to:
     ${Object.entries(targetTraits)
       .map(([key, value]) => `${key}: ${value}`)
       .join('\n')}
     
     Important guidelines:
-    - Keep responses under 15 words
+    - Keep responses under 30 words each
     - Be casual and natural, avoid being cheesy or overly familiar
     - Focus only on their interests and traits
     - Return exactly 3 ice breakers, numbered 1-3
     - No introductory text or explanations
-    - No exclamation marks or emojis`;
+    - No exclamation marks or emojis
+    ${isFirstTime ? '- These should be suitable for a first-time conversation' : ''}`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',

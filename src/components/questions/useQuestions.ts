@@ -40,11 +40,11 @@ export const useQuestions = () => {
     setAiResponses([]);
   };
 
-  const generateResponses = async () => {
+  const generateResponses = async (isFirstTime: boolean = false) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-ice-breakers', {
-        body: { answers }
+        body: { answers, isFirstTime }
       });
 
       if (error) throw error;
@@ -63,6 +63,7 @@ export const useQuestions = () => {
     isLoading,
     handleInputChange,
     generateResponses,
-    clearForm
+    clearForm,
+    setAnswers
   };
 };
