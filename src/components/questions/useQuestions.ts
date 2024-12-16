@@ -28,8 +28,12 @@ export const questions = {
   ]
 };
 
+interface ProfileAnswers {
+  [key: string]: string;
+}
+
 export const useQuestions = () => {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<ProfileAnswers>({});
   const [aiResponses, setAiResponses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentProfileName, setCurrentProfileName] = useState("");
@@ -57,7 +61,9 @@ export const useQuestions = () => {
 
         if (profile) {
           console.log('Loading profile data:', profile);
-          setAnswers(profile.answers || {});
+          // Ensure the answers object from the database is properly typed
+          const typedAnswers: ProfileAnswers = profile.answers as ProfileAnswers || {};
+          setAnswers(typedAnswers);
           setCurrentProfileName(profile.name);
         }
       } catch (error) {
