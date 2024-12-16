@@ -6,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
+import { useQuestions } from "../questions/useQuestions";
 
 export const Menu = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { clearForm } = useQuestions();
 
   const { data: savedProfiles } = useQuery({
     queryKey: ['saved-profiles'],
@@ -40,8 +42,8 @@ export const Menu = () => {
   };
 
   const handleNewProfile = () => {
+    clearForm();
     setOpen(false);
-    // Reset form or navigate to new profile page
     toast({
       title: "New Profile",
       description: "Started a new profile.",

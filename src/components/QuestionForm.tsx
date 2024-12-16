@@ -1,66 +1,29 @@
 import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { RefreshCw, BookmarkPlus, Edit2, Trash2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { QuestionCard } from "./questions/QuestionCard";
 import { ResponseCard } from "./responses/ResponseCard";
+import { questions, useQuestions } from "./questions/useQuestions";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-const questions = [
-  { id: "feeling", text: "How's the other person feeling?" },
-  { id: "situation", text: "What's the situation?" },
-  { id: "comeAcross", text: "How would you like to come across?" },
-  { id: "theirAge", text: "What's their age?" },
-  { id: "yourAge", text: "What's your age?" },
-  { id: "zodiac", text: "What's their zodiac sign?" },
-  { id: "origin", text: "Where are they from?" },
-  { id: "hobbies", text: "What are their hobbies?" },
-  { id: "loves", text: "What do they love?" },
-  { id: "dislikes", text: "What do they dislike?" },
-  { id: "mbti", text: "What's their MBTI type?" },
-  { id: "books", text: "What are their favorite books?" },
-  { id: "music", text: "What's their favorite music?" },
-  { id: "humor", text: "How would you describe their sense of humor?" },
-  { id: "previousTopics", text: "What topics have you chatted about before?" },
-  { id: "style", text: "What's their style?" },
-  { id: "passions", text: "What are they passionate about?" },
-  { id: "vibe", text: "What's their vibe like?" },
-  { id: "preferredTopics", text: "What do you prefer to talk about?" }
-];
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const QuestionForm = () => {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [aiResponses, setAiResponses] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [profileName, setProfileName] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const { data: savedProfiles } = useQuery({
-    queryKey: ['saved-profiles'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('saved_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-  });
-
-  const { data: savedResponses } = useQuery({
-    queryKey: ['saved-responses'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('saved_responses')
-        .select('*')
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-  });
+  
+  const {
+    answers,
+    aiResponses,
+    isLoading,
+    handleInputChange,
+    generateResponses,
+    clearForm
+  } = useQuestions();
 
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
@@ -111,47 +74,8 @@ export const QuestionForm = () => {
     },
   });
 
-  const handleInputChange = (id: string, value: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [id]: value
-    }));
-  };
-
-  const generateResponses = async () => {
-    setIsLoading(true);
-    try {
-      // Here we'll integrate with OpenAI
-      // For now, just mock responses
-      const mockResponses = [
-        "Hey! I noticed you seem really passionate about hiking. What's your favorite trail so far?",
-        "I couldn't help but notice your enthusiasm for outdoor adventures. Got any exciting trips planned?",
-        "Your love for nature really shows! What inspired you to start hiking?"
-      ];
-      setAiResponses(mockResponses);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate responses. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="max-w-5xl mx-auto px-4 space-y-6">
-      <div className="flex justify-end">
-        <Button 
-          onClick={() => setShowSaveDialog(true)}
-          className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
-        >
-          <BookmarkPlus className="mr-2 h-4 w-4" />
-          Save Profile
-        </Button>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {questions.map((question) => (
           <QuestionCard
