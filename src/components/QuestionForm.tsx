@@ -1,113 +1,19 @@
 import { useState } from 'react';
-import { useToast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { QuestionCard } from "./questions/QuestionCard";
 import { ResponseCard } from "./responses/ResponseCard";
 import { questions, useQuestions } from "./questions/useQuestions";
-import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FormControls } from "./questions/FormControls";
 import { SaveProfileDialog } from "./questions/SaveProfileDialog";
 import { ProfileHeader } from "./questions/ProfileHeader";
-
-// Define mutations outside the component
-const createSaveProfileMutation = (queryClient: any, toast: any) => 
-  useMutation({
-    mutationFn: async ({ profileName, answers }: { profileName: string; answers: any }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('saved_profiles')
-        .insert({
-          name: profileName,
-          answers,
-          user_id: user.id
-        });
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast({
-        title: "Profile Saved!",
-        description: "Your profile has been saved successfully.",
-      });
-    },
-  });
-
-const createUpdateProfileMutation = (queryClient: any, toast: any) =>
-  useMutation({
-    mutationFn: async ({ profileId, answers }: { profileId: string; answers: any }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('saved_profiles')
-        .update({ answers })
-        .eq('id', profileId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast({
-        title: "Changes Saved!",
-        description: "Your profile changes have been saved successfully.",
-      });
-    },
-  });
-
-const createUpdateProfileNameMutation = (queryClient: any, toast: any) =>
-  useMutation({
-    mutationFn: async ({ profileId, newName }: { profileId: string; newName: string }) => {
-      const { error } = await supabase
-        .from('saved_profiles')
-        .update({ name: newName })
-        .eq('id', profileId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast({
-        title: "Profile Updated",
-        description: "Profile name has been updated successfully.",
-      });
-    },
-  });
-
-const createSaveResponseMutation = (queryClient: any, toast: any) =>
-  useMutation({
-    mutationFn: async (text: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('saved_responses')
-        .insert({
-          text,
-          user_id: user.id
-        });
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved-responses'] });
-      toast({
-        title: "Saved!",
-        description: "Response has been saved to your collection.",
-      });
-    },
-  });
+import { useProfileMutations } from "./questions/useProfileMutations";
+import { useResponseMutations } from "./questions/useResponseMutations";
 
 export const QuestionForm = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [profileName, setProfileName] = useState("");
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   
   const {
     answers,
@@ -124,10 +30,8 @@ export const QuestionForm = () => {
     setCurrentProfileId
   } = useQuestions();
 
-  const saveProfileMutation = createSaveProfileMutation(queryClient, toast);
-  const updateProfileMutation = createUpdateProfileMutation(queryClient, toast);
-  const updateProfileNameMutation = createUpdateProfileNameMutation(queryClient, toast);
-  const saveResponseMutation = createSaveResponseMutation(queryClient, toast);
+  const { saveProfileMutation, updateProfileMutation, updateProfileNameMutation } = useProfileMutations();
+  const { saveResponseMutation } = useResponseMutations();
 
   const handleInputChange = (id: string, value: string) => {
     baseHandleInputChange(id, value);

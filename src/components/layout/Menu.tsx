@@ -5,13 +5,12 @@ import { Menu as MenuIcon, X, Plus, LogOut, MessageSquare, User, Trash2 } from "
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useQuestions } from "../questions/useQuestions";
 
 export const Menu = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { clearForm, setAnswers, setCurrentProfileName, setCurrentProfileId } = useQuestions();
 
@@ -39,8 +38,7 @@ export const Menu = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast({
-        title: "Profile Deleted",
+      toast("Profile Deleted", {
         description: "The profile has been deleted successfully.",
       });
     },
@@ -52,23 +50,24 @@ export const Menu = () => {
   };
 
   const handleNewProfile = () => {
-    console.log('Creating new profile');
+    console.log('Creating new profile - clearing all state');
     clearForm();
     setOpen(false);
-    toast({
-      title: "New Profile",
+    toast("New Profile", {
       description: "Started a new profile.",
     });
   };
 
   const handleLoadProfile = (profile: any) => {
     console.log('Loading profile:', profile);
+    // First clear the form to remove any existing data
+    clearForm();
+    // Then set the new profile data
     setAnswers(profile.answers || {});
     setCurrentProfileName(profile.name);
     setCurrentProfileId(profile.id);
     setOpen(false);
-    toast({
-      title: "Profile Loaded",
+    toast("Profile Loaded", {
       description: "The profile has been loaded successfully.",
     });
   };

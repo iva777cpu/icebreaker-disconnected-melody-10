@@ -44,11 +44,12 @@ export const useQuestions = () => {
   };
 
   const clearForm = useCallback(() => {
-    console.log('Clearing form state');
+    console.log('Clearing form state completely');
     setAnswers({});
     setAiResponses([]);
     setCurrentProfileId(null);
     setCurrentProfileName("");
+    setIsLoading(false);
   }, []);
 
   const generateResponses = async (isFirstTime: boolean = false) => {
