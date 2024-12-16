@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { RefreshCw, Save, Edit2, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { QuestionCard } from "./questions/QuestionCard";
+import { ResponseCard } from "./responses/ResponseCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface Question {
-  id: string;
-  text: string;
-}
-
-const questions: Question[] = [
+const questions = [
   { id: "feeling", text: "How's the other person feeling?" },
   { id: "situation", text: "What's the situation?" },
   { id: "comeAcross", text: "How would you like to come across?" },
@@ -33,26 +31,118 @@ const questions: Question[] = [
   { id: "preferredTopics", text: "What do you prefer to talk about?" }
 ];
 
-interface SavedProfile {
-  id: string;
-  name: string;
-  answers: Record<string, string>;
-}
-
-interface SavedResponse {
-  id: string;
-  text: string;
-  timestamp: number;
-}
-
 export const QuestionForm = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [aiResponses, setAiResponses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>([]);
-  const [savedResponses, setSavedResponses] = useState<SavedResponse[]>([]);
   const [profileName, setProfileName] = useState("New Profile");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: savedProfiles } = useQuery({
+    queryKey: ['saved-profiles'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('saved_profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+  });
+
+  const { data: savedResponses } = useQuery({
+    queryKey: ['saved-responses'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('saved_responses')
+        .select('*')
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+  });
+
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('saved_profiles')
+        .insert({
+          name: profileName,
+          answers,
+          user_id: user.id
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
+      toast({
+        title: "Profile Saved!",
+        description: "Your profile has been saved successfully.",
+      });
+    },
+  });
+
+  const saveResponseMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('saved_responses')
+        .insert({
+          text,
+          user_id: user.id
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-responses'] });
+      toast({
+        title: "Saved!",
+        description: "Response has been saved to your collection.",
+      });
+    },
+  });
+
+  const deleteProfileMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('saved_profiles')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
+      toast({
+        title: "Profile Deleted",
+        description: "The profile has been removed.",
+      });
+    },
+  });
+
+  const deleteResponseMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('saved_responses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-responses'] });
+      toast({
+        title: "Response Deleted",
+        description: "The saved response has been removed.",
+      });
+    },
+  });
 
   const handleInputChange = (id: string, value: string) => {
     setAnswers(prev => ({
@@ -83,33 +173,7 @@ export const QuestionForm = () => {
     }
   };
 
-  const saveResponse = (response: string) => {
-    const newResponse = {
-      id: Date.now().toString(),
-      text: response,
-      timestamp: Date.now()
-    };
-    setSavedResponses(prev => [newResponse, ...prev]);
-    toast({
-      title: "Saved!",
-      description: "Response has been saved to your collection.",
-    });
-  };
-
-  const saveProfile = () => {
-    const newProfile = {
-      id: Date.now().toString(),
-      name: profileName,
-      answers: { ...answers }
-    };
-    setSavedProfiles(prev => [newProfile, ...prev]);
-    toast({
-      title: "Profile Saved!",
-      description: "Your profile has been saved successfully.",
-    });
-  };
-
-  const loadProfile = (profile: SavedProfile) => {
+  const loadProfile = (profile: any) => {
     setAnswers(profile.answers);
     setProfileName(profile.name);
     toast({
@@ -118,91 +182,81 @@ export const QuestionForm = () => {
     });
   };
 
-  const deleteProfile = (id: string) => {
-    setSavedProfiles(prev => prev.filter(profile => profile.id !== id));
-    toast({
-      title: "Profile Deleted",
-      description: "The profile has been removed.",
-    });
-  };
-
-  const deleteResponse = (id: string) => {
-    setSavedResponses(prev => prev.filter(response => response.id !== id));
-    toast({
-      title: "Response Deleted",
-      description: "The saved response has been removed.",
-    });
-  };
-
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
-      <div className="flex justify-between items-center mb-8">
-        <div className="space-y-2">
-          <Input
-            value={profileName}
-            onChange={(e) => setProfileName(e.target.value)}
-            className="max-w-xs"
-            placeholder="Profile Name"
-          />
-        </div>
-        <div className="space-x-4">
-          <Button onClick={saveProfile} className="bg-primary hover:bg-primary/90">
+    <div className="max-w-5xl mx-auto px-4 space-y-6">
+      <div className="flex justify-between items-center">
+        <Input
+          value={profileName}
+          onChange={(e) => setProfileName(e.target.value)}
+          className="max-w-xs text-sm bg-[#2D4531]/5 border-[#2D4531]/20 text-[#EDEDDD]"
+          placeholder="Profile Name"
+        />
+        <div className="space-x-3">
+          <Button 
+            onClick={() => saveProfileMutation.mutate()}
+            className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
+          >
             <Save className="mr-2 h-4 w-4" />
             Save Profile
           </Button>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline">View Saved</Button>
+              <Button variant="outline" className="border-[#2D4531]/20 text-[#EDEDDD]">
+                View Saved
+              </Button>
             </SheetTrigger>
-            <SheetContent className="w-[400px] sm:w-[540px] bg-card">
+            <SheetContent className="w-[400px] sm:w-[540px] bg-[#1a2a1d] border-l-[#2D4531]/20">
               <SheetHeader>
-                <SheetTitle>Saved Profiles & Responses</SheetTitle>
+                <SheetTitle className="text-[#EDEDDD]">Saved Profiles & Responses</SheetTitle>
               </SheetHeader>
               <div className="mt-6 space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Saved Profiles</h3>
-                  <div className="space-y-4">
-                    {savedProfiles.map((profile) => (
-                      <Card key={profile.id} className="p-4">
+                  <h3 className="text-lg font-medium mb-4 text-[#EDEDDD]">Saved Profiles</h3>
+                  <div className="space-y-3">
+                    {savedProfiles?.map((profile) => (
+                      <div key={profile.id} className="p-3 rounded-md bg-[#2D4531]/10 border border-[#2D4531]/20">
                         <div className="flex justify-between items-center">
-                          <span className="font-medium">{profile.name}</span>
-                          <div className="space-x-2">
+                          <span className="text-sm font-medium text-[#EDEDDD]">{profile.name}</span>
+                          <div className="space-x-1">
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => loadProfile(profile)}
+                              className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => deleteProfile(profile.id)}
+                              onClick={() => deleteProfileMutation.mutate(profile.id)}
+                              className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
-                      </Card>
+                      </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Saved Responses</h3>
-                  <div className="space-y-4">
-                    {savedResponses.map((response) => (
-                      <Card key={response.id} className="p-4">
-                        <div className="flex justify-between items-center">
-                          <p className="flex-1">{response.text}</p>
+                  <h3 className="text-lg font-medium mb-4 text-[#EDEDDD]">Saved Responses</h3>
+                  <div className="space-y-3">
+                    {savedResponses?.map((response) => (
+                      <div key={response.id} className="p-3 rounded-md bg-[#2D4531]/10 border border-[#2D4531]/20">
+                        <div className="flex justify-between items-center gap-4">
+                          <p className="text-sm text-[#EDEDDD]">{response.text}</p>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => deleteResponse(response.id)}
+                            onClick={() => deleteResponseMutation.mutate(response.id)}
+                            className="text-[#EDEDDD] hover:bg-[#2D4531]/20"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </Card>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -212,17 +266,15 @@ export const QuestionForm = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {questions.map((question) => (
-          <Card key={question.id} className="p-6 fade-in">
-            <h3 className="text-lg font-semibold mb-4">{question.text}</h3>
-            <Input
-              placeholder="Type your answer here..."
-              className="mb-2"
-              value={answers[question.id] || ""}
-              onChange={(e) => handleInputChange(question.id, e.target.value)}
-            />
-          </Card>
+          <QuestionCard
+            key={question.id}
+            id={question.id}
+            text={question.text}
+            value={answers[question.id] || ""}
+            onChange={handleInputChange}
+          />
         ))}
       </div>
 
@@ -230,7 +282,7 @@ export const QuestionForm = () => {
         <Button
           onClick={generateResponses}
           disabled={isLoading}
-          className="bg-primary hover:bg-primary/90"
+          className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
         >
           {isLoading ? (
             <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -243,21 +295,14 @@ export const QuestionForm = () => {
 
       {aiResponses.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-center">Generated Ice Breakers</h2>
-          <div className="grid gap-4">
+          <h2 className="text-xl font-medium text-center text-[#EDEDDD]">Generated Ice Breakers</h2>
+          <div className="grid gap-3">
             {aiResponses.map((response, index) => (
-              <Card key={index} className="p-4 fade-in">
-                <div className="flex justify-between items-start">
-                  <p className="flex-1">{response}</p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => saveResponse(response)}
-                  >
-                    <Save className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
+              <ResponseCard
+                key={index}
+                response={response}
+                onSave={(text) => saveResponseMutation.mutate(text)}
+              />
             ))}
           </div>
         </div>

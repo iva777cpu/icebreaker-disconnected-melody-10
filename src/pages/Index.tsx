@@ -1,17 +1,41 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
+import { AuthForm } from "@/components/auth/AuthForm";
+import { Header } from "@/components/layout/Header";
 import { QuestionForm } from "@/components/QuestionForm";
 
 const Index = () => {
+  const [session, setSession] = useState<Session | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-[#1a2a1d] flex items-center justify-center px-4">
+        <AuthForm />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="py-8 bg-primary/5">
-        <div className="max-w-4xl mx-auto px-6">
-          <h1 className="text-3xl font-bold text-primary">AI Ice Breaker Generator</h1>
-          <p className="text-muted-foreground mt-2">
-            Fill in what you know, and let AI help you break the ice perfectly
-          </p>
-        </div>
-      </header>
-      <main className="py-8">
+    <div className="min-h-screen bg-[#1a2a1d]">
+      <Header />
+      <main className="py-6">
         <QuestionForm />
       </main>
     </div>
