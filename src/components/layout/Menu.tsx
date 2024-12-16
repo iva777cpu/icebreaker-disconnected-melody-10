@@ -52,7 +52,7 @@ export const Menu = () => {
       console.error('Error deleting profile:', error);
       toast("Error", {
         description: "Failed to delete profile. Please try again.",
-        variant: "destructive",
+        style: { background: 'red', color: 'white' }
       });
     },
   });

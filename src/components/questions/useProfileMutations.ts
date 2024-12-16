@@ -31,7 +31,7 @@ export const useProfileMutations = () => {
       console.error('Error saving profile:', error);
       toast("Error", {
         description: "Failed to save profile. Please try again.",
-        variant: "destructive",
+        style: { background: 'red', color: 'white' }
       });
     }
   });
@@ -59,7 +59,7 @@ export const useProfileMutations = () => {
       console.error('Error updating profile:', error);
       toast("Error", {
         description: "Failed to update profile. Please try again.",
-        variant: "destructive",
+        style: { background: 'red', color: 'white' }
       });
     }
   });
@@ -84,7 +84,7 @@ export const useProfileMutations = () => {
       console.error('Error updating profile name:', error);
       toast("Error", {
         description: "Failed to update profile name. Please try again.",
-        variant: "destructive",
+        style: { background: 'red', color: 'white' }
       });
     }
   });
