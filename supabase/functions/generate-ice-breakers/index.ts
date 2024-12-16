@@ -31,7 +31,7 @@ serve(async (req) => {
     - No introductory text or explanations
     - No exclamation marks or emojis
     - Consider both the speaker's traits and the target's characteristics
-    ${isFirstTime ? '- These should be suitable for a first-time conversation' : ''}`;
+    ${isFirstTime ? '- These should be suitable for a first-time conversation icebreakers so avoid acting so familiar' : ''}`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
