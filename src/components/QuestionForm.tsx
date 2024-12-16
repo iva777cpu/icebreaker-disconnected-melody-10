@@ -97,16 +97,36 @@ export const QuestionForm = () => {
         </label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {questions.map((question) => (
-          <QuestionCard
-            key={question.id}
-            id={question.id}
-            text={question.text}
-            value={answers[question.id] || ""}
-            onChange={handleInputChange}
-          />
-        ))}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-medium mb-4 text-[#EDEDDD]">About You</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {questions.userTraits.map((question) => (
+              <QuestionCard
+                key={question.id}
+                id={question.id}
+                text={question.text}
+                value={answers[question.id] || ""}
+                onChange={handleInputChange}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-medium mb-4 text-[#EDEDDD]">About Them</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {questions.targetTraits.map((question) => (
+              <QuestionCard
+                key={question.id}
+                id={question.id}
+                text={question.text}
+                value={answers[question.id] || ""}
+                onChange={handleInputChange}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-center">
