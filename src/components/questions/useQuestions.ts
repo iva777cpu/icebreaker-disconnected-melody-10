@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
 export const questions = {
@@ -34,6 +34,17 @@ export const useQuestions = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentProfileName, setCurrentProfileName] = useState("");
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+
+  // Clear everything when currentProfileId changes
+  useEffect(() => {
+    console.log('Profile ID changed:', currentProfileId);
+    if (currentProfileId === null) {
+      console.log('Clearing form due to null profile ID');
+      setAnswers({});
+      setAiResponses([]);
+      setCurrentProfileName("");
+    }
+  }, [currentProfileId]);
 
   const handleInputChange = (id: string, value: string) => {
     console.log('Updating answer for:', id, 'with value:', value);

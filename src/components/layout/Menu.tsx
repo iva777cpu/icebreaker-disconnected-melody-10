@@ -38,9 +38,7 @@ export const Menu = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-profiles'] });
-      toast("Profile Deleted", {
-        description: "The profile has been deleted successfully.",
-      });
+      toast.success("Profile deleted successfully");
     },
   });
 
@@ -51,25 +49,27 @@ export const Menu = () => {
 
   const handleNewProfile = () => {
     console.log('Creating new profile - clearing all state');
-    clearForm();
+    clearForm(); // This will trigger the useEffect in useQuestions
     setOpen(false);
-    toast("New Profile", {
-      description: "Started a new profile.",
-    });
+    toast.success("Started a new profile");
   };
 
-  const handleLoadProfile = (profile: any) => {
+  const handleLoadProfile = async (profile: any) => {
     console.log('Loading profile:', profile);
-    // First clear the form to remove any existing data
+    
+    // First clear everything
     clearForm();
+    
+    // Wait for a tick to ensure state is cleared
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
     // Then set the new profile data
-    setAnswers(profile.answers || {});
-    setCurrentProfileName(profile.name);
     setCurrentProfileId(profile.id);
+    setCurrentProfileName(profile.name);
+    setAnswers(profile.answers || {});
+    
     setOpen(false);
-    toast("Profile Loaded", {
-      description: "The profile has been loaded successfully.",
-    });
+    toast.success("Profile loaded successfully");
   };
 
   const handleViewSavedResponses = () => {
