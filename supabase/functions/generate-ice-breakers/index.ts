@@ -39,11 +39,10 @@ serve(async (req) => {
     Important guidelines:
     - Keep responses under 30 words each
     - Be casual and natural, avoid being cheesy or overly familiar
-    - Focus only on their interests and traits
     - Return exactly 3 ice breakers, numbered 1-3
     - No introductory text or explanations
     - No exclamation marks or emojis
-    ${isFirstTime ? '- These should be suitable for a first-time conversation' : ''}`;
+    ${isFirstTime ? '- These should be suitable for a first-time conversation ice breakers' : ''}`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
