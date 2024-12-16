@@ -49,7 +49,7 @@ export const Menu = () => {
 
   const handleNewProfile = () => {
     console.log('Creating new profile - clearing all state');
-    clearForm(); // This will trigger the useEffect in useQuestions
+    clearForm();
     setOpen(false);
     toast.success("Started a new profile");
   };
@@ -60,7 +60,7 @@ export const Menu = () => {
     // First clear everything
     clearForm();
     
-    // Wait for a tick to ensure state is cleared
+    // Wait for state to clear
     await new Promise(resolve => setTimeout(resolve, 0));
     
     // Then set the new profile data
