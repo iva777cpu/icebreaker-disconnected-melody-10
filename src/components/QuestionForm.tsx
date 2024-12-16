@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Save } from "lucide-react";
+import { RefreshCw, Save, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -115,12 +115,17 @@ export const QuestionForm = () => {
     clearForm();
     setCurrentProfileId(null);
     setHasUnsavedChanges(false);
+    setAiResponses([]);
   };
 
   const handleSaveChanges = () => {
     if (currentProfileId) {
       updateProfileMutation.mutate(currentProfileId);
     }
+  };
+
+  const handleSaveNewProfile = () => {
+    setShowSaveDialog(true);
   };
 
   return (
@@ -180,6 +185,15 @@ export const QuestionForm = () => {
           >
             <Save className="mr-2 h-4 w-4" />
             Save Changes
+          </Button>
+        )}
+        {!currentProfileId && Object.keys(answers).some(key => answers[key]) && (
+          <Button
+            onClick={handleSaveNewProfile}
+            className="bg-[#2D4531] hover:bg-[#2D4531]/90 text-[#EDEDDD]"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Save Profile
           </Button>
         )}
         <Button

@@ -78,7 +78,7 @@ export const Menu = () => {
     });
   };
 
-  const handleLoadProfile = async (profile: any) => {
+  const handleLoadProfile = (profile: any) => {
     setAnswers(profile.answers);
     setOpen(false);
     toast({

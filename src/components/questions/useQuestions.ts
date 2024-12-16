@@ -84,6 +84,7 @@ export const useQuestions = () => {
     handleInputChange,
     generateResponses,
     clearForm,
-    setAnswers
+    setAnswers,
+    setAiResponses
   };
 };
