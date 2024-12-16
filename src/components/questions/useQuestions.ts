@@ -35,31 +35,50 @@ export const useQuestions = () => {
   const [currentProfileName, setCurrentProfileName] = useState("");
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
-  // Reset state when profile ID changes
+  // Synchronize state when profile ID changes
   useEffect(() => {
-    console.log('Profile ID changed:', currentProfileId);
-    if (currentProfileId === null) {
-      console.log('Clearing form due to null profile ID');
-      setAnswers({});
-      setAiResponses([]);
-      setCurrentProfileName("");
-    }
+    const syncState = async () => {
+      console.log('Profile ID changed - syncing state:', currentProfileId);
+      
+      if (currentProfileId === null) {
+        console.log('Clearing all state for new/null profile');
+        setAnswers({});
+        setAiResponses([]);
+        setCurrentProfileName("");
+        return;
+      }
+
+      try {
+        const { data: profile } = await supabase
+          .from('saved_profiles')
+          .select('*')
+          .eq('id', currentProfileId)
+          .single();
+
+        if (profile) {
+          console.log('Loading profile data:', profile);
+          setAnswers(profile.answers || {});
+          setCurrentProfileName(profile.name);
+        }
+      } catch (error) {
+        console.error('Error syncing profile state:', error);
+      }
+    };
+
+    syncState();
   }, [currentProfileId]);
 
   const handleInputChange = (id: string, value: string) => {
-    console.log('Input changed for field:', id, 'with value:', value);
+    console.log('Input change triggered for:', id);
     setAnswers(prev => {
-      const newAnswers = {
-        ...prev,
-        [id]: value
-      };
-      console.log('New answers state:', newAnswers);
+      const newAnswers = { ...prev, [id]: value };
+      console.log('Updated answers state:', newAnswers);
       return newAnswers;
     });
   };
 
   const clearForm = useCallback(() => {
-    console.log('Clearing form state completely');
+    console.log('Clearing form state');
     setAnswers({});
     setAiResponses([]);
     setCurrentProfileId(null);
@@ -68,9 +87,10 @@ export const useQuestions = () => {
   }, []);
 
   const generateResponses = async (isFirstTime: boolean = false) => {
+    console.log('Generating responses with state:', { answers, isFirstTime });
     setIsLoading(true);
+
     try {
-      console.log('Generating responses with answers:', answers);
       const filledAnswers = Object.entries(answers)
         .filter(([_, value]) => value && value.toString().trim() !== '')
         .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
@@ -91,6 +111,7 @@ export const useQuestions = () => {
       });
 
       if (error) throw error;
+      
       console.log('Generated responses:', data.iceBreakers);
       setAiResponses(data.iceBreakers);
     } catch (error) {

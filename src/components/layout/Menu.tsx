@@ -14,14 +14,16 @@ export const Menu = () => {
   const queryClient = useQueryClient();
   const { clearForm, setAnswers, setCurrentProfileName, setCurrentProfileId } = useQuestions();
 
-  const { data: savedProfiles } = useQuery({
+  const { data: savedProfiles, isLoading: isLoadingProfiles } = useQuery({
     queryKey: ['saved-profiles'],
     queryFn: async () => {
       console.log('Fetching saved profiles');
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('saved_profiles')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      if (error) throw error;
       console.log('Fetched profiles:', data);
       return data || [];
     },
@@ -48,7 +50,7 @@ export const Menu = () => {
   };
 
   const handleNewProfile = () => {
-    console.log('Creating new profile - clearing all state');
+    console.log('Creating new profile');
     clearForm();
     setOpen(false);
     toast.success("Started a new profile");
@@ -60,10 +62,7 @@ export const Menu = () => {
     // First clear everything
     clearForm();
     
-    // Wait for state to clear
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Then set the new profile data in the correct order
+    // Set the new profile data
     setCurrentProfileId(profile.id);
     setCurrentProfileName(profile.name);
     setAnswers(profile.answers || {});
@@ -106,7 +105,9 @@ export const Menu = () => {
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-[#EDEDDD]">Saved Profiles</h3>
             <div className="space-y-2">
-              {savedProfiles?.map((profile) => (
+              {isLoadingProfiles ? (
+                <div className="text-[#EDEDDD] text-sm">Loading profiles...</div>
+              ) : savedProfiles?.map((profile) => (
                 <div key={profile.id} className="flex items-center gap-2">
                   <Button
                     variant="ghost"
